@@ -1,5 +1,6 @@
 from collections import deque
 from time import perf_counter
+from resultados import ResultadoBusqueda
 import heapq
 
 def reconstruir_ruta(padres, meta):
@@ -286,3 +287,71 @@ def a_star(grafo, heuristica, inicio, meta):
         tiempo_ms
     )
 
+def uniform_cost_search(grafo, inicio, meta):
+    tiempo_inicio = perf_counter()
+
+    # 1. Inicialización
+    # Frontera: cola de prioridad ordenada por costo acumulado g(n) -> (g(n), nodo)
+    frontera = [(0, inicio)]
+    visitados = set()
+    padres = {inicio: None}
+    costos = {inicio: 0}
+
+    orden_expansion = []
+    frontera_maxima = 1
+
+    # 2. Bucle principal
+    while frontera:
+        g_actual, actual = heapq.heappop(frontera)
+
+        # Si ya procesamos este nodo con un costo óptimo, lo ignoramos
+        if actual in visitados:
+            continue
+            
+        visitados.add(actual)
+        orden_expansion.append(actual)
+
+        # 3. Evaluación de meta
+        if actual == meta:
+            ruta = reconstruir_ruta(padres, meta) # Asume que esta función auxiliar ya existe
+            tiempo_ms = (perf_counter() - tiempo_inicio) * 1000
+
+            # USO DE LA DATACLASS
+            return ResultadoBusqueda(
+                algoritmo="UCS",
+                ruta=ruta,
+                costo_total=costos[meta],
+                nodos_expandidos=len(orden_expansion),
+                orden_expansion=orden_expansion,
+                frontera_maxima=frontera_maxima,
+                tiempo_ms=tiempo_ms
+            )
+
+        # 4. Exploración y relajación de vecinos
+        for vecino, costo_arista in grafo.obtener_vecinos(actual):
+            if vecino in visitados:
+                continue
+                
+            nuevo_costo = g_actual + costo_arista
+
+            # Si encontramos un camino más barato hacia el vecino
+            if vecino not in costos or nuevo_costo < costos[vecino]:
+                costos[vecino] = nuevo_costo
+                padres[vecino] = actual
+                heapq.heappush(frontera, (nuevo_costo, vecino))
+
+        frontera_maxima = max(frontera_maxima, len(frontera))
+
+    # 5. Caso sin solución
+    tiempo_ms = (perf_counter() - tiempo_inicio) * 1000
+    
+    # USO DE LA DATACLASS (Ruta vacía)
+    return ResultadoBusqueda(
+        algoritmo="UCS",
+        ruta=[],
+        costo_total=0.0, 
+        nodos_expandidos=len(orden_expansion),
+        orden_expansion=orden_expansion,
+        frontera_maxima=frontera_maxima,
+        tiempo_ms=tiempo_ms
+    )
