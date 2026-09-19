@@ -10,7 +10,7 @@ POSICIONES_NODOS = {
     "TorreEste": (23, 20, 12),
     "TuberiaNorte": (22, 15, 6),
     "TuberiaSur": (20, 22, 10),
-    "Almacen": (20, 22, 9),
+    "Almacen": (21, 24, 9),  # Coordenadas X e Y modificadas para evitar solapamiento visual
     "Subestacion": (25, 17, 8),
     "AreaProduccion1": (25, 16, 8),
     "AreaProduccion2": (24, 22, 12),
