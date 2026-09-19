@@ -19,39 +19,52 @@ POSICIONES_NODOS = {
     "PuntoInspeccionFinal": (30, 20, 10)
 }
 
+def distancia_3d(u, v, posiciones):
+    """Calcula la distancia euclidiana 3D real entre dos nodos conectados."""
+    x1, y1, z1 = posiciones[u]
+    x2, y2, z2 = posiciones[v]
+    return round(math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2), 2)
+
 def generar_heuristica_euclidiana(posiciones, meta):
-    """Calcula h(n) como la distancia euclidiana 3D admisible hacia la meta."""
+    """Calcula h(n) como la distancia euclidiana 3D admisible y consistente hacia la meta."""
     x_m, y_m, z_m = posiciones[meta]
     return {
-        nodo: math.sqrt((x - x_m)**2 + (y - y_m)**2 + (z - z_m)**2)
+        nodo: round(math.sqrt((x - x_m)**2 + (y - y_m)**2 + (z - z_m)**2), 2)
         for nodo, (x, y, z) in posiciones.items()
     }
 
 def crear_escenario_1():
     grafo = GrafoListaAdyacencia()
     
-    # Aristas del escenario base
-    grafo.agregar_arista("EstacionCarga", "TanqueNorte", 4)
-    grafo.agregar_arista("EstacionCarga", "TorreAlta", 12)
-    grafo.agregar_arista("EstacionCarga", "Almacen", 5)
-    grafo.agregar_arista("TanqueNorte", "TanqueSur", 3)
-    grafo.agregar_arista("TanqueNorte", "TuberiaNorte", 4)
-    grafo.agregar_arista("TanqueSur", "TuberiaSur", 5)
-    grafo.agregar_arista("TanqueSur", "AreaProduccion1", 4)
-    grafo.agregar_arista("TorreAlta", "PuntoInspeccionFinal", 13)
-    grafo.agregar_arista("TorreAlta", "TorreEste", 7)
-    grafo.agregar_arista("TorreEste", "Subestacion", 5)
-    grafo.agregar_arista("TuberiaNorte", "Subestacion", 4)
-    grafo.agregar_arista("TuberiaNorte", "AreaProduccion1", 5)
-    grafo.agregar_arista("TuberiaSur", "Almacen", 4)
-    grafo.agregar_arista("TuberiaSur", "AreaProduccion2", 4)
-    grafo.agregar_arista("Almacen", "AreaProduccion2", 3)
-    grafo.agregar_arista("Subestacion", "PuntoInspeccion1", 3)
-    grafo.agregar_arista("AreaProduccion1", "PuntoInspeccion1", 3)
-    grafo.agregar_arista("AreaProduccion2", "PuntoInspeccion2", 3)
-    grafo.agregar_arista("PuntoInspeccion1", "PuntoInspeccionFinal", 4)
-    grafo.agregar_arista("PuntoInspeccion2", "PuntoInspeccionFinal", 5)
-    grafo.agregar_arista("PuntoInspeccion1", "PuntoInspeccion2", 4)
+    # Definición de adyacencias
+    conexiones = [
+        ("EstacionCarga", "TanqueNorte"),
+        ("EstacionCarga", "TorreAlta"),
+        ("EstacionCarga", "Almacen"),
+        ("TanqueNorte", "TanqueSur"),
+        ("TanqueNorte", "TuberiaNorte"),
+        ("TanqueSur", "TuberiaSur"),
+        ("TanqueSur", "AreaProduccion1"),
+        ("TorreAlta", "PuntoInspeccionFinal"),
+        ("TorreAlta", "TorreEste"),
+        ("TorreEste", "Subestacion"),
+        ("TuberiaNorte", "Subestacion"),
+        ("TuberiaNorte", "AreaProduccion1"),
+        ("TuberiaSur", "Almacen"),
+        ("TuberiaSur", "AreaProduccion2"),
+        ("Almacen", "AreaProduccion2"),
+        ("Subestacion", "PuntoInspeccion1"),
+        ("AreaProduccion1", "PuntoInspeccion1"),
+        ("AreaProduccion2", "PuntoInspeccion2"),
+        ("PuntoInspeccion1", "PuntoInspeccionFinal"),
+        ("PuntoInspeccion2", "PuntoInspeccionFinal"),
+        ("PuntoInspeccion1", "PuntoInspeccion2")
+    ]
+    
+    # Asigna a cada arista su distancia física real 3D
+    for origen, destino in conexiones:
+        costo = distancia_3d(origen, destino, POSICIONES_NODOS)
+        grafo.agregar_arista(origen, destino, costo)
 
     inicio = "EstacionCarga"
     meta = "PuntoInspeccionFinal"
@@ -62,9 +75,12 @@ def crear_escenario_1():
 def crear_escenario_2():
     grafo, _, inicio, meta = crear_escenario_1()
     
-    # Alteraciones de costos por obstáculos y viento
-    grafo.cambiar_costo_arista("Almacen", "AreaProduccion2", 10)
-    grafo.cambiar_costo_arista("PuntoInspeccion2", "PuntoInspeccionFinal", 9)
+    # Penalizaciones adicionales sobre el costo base por viento u obstáculos
+    costo_base_1 = distancia_3d("Almacen", "AreaProduccion2", POSICIONES_NODOS)
+    costo_base_2 = distancia_3d("PuntoInspeccion2", "PuntoInspeccionFinal", POSICIONES_NODOS)
+    
+    grafo.cambiar_costo_arista("Almacen", "AreaProduccion2", round(costo_base_1 + 10.0, 2))
+    grafo.cambiar_costo_arista("PuntoInspeccion2", "PuntoInspeccionFinal", round(costo_base_2 + 9.0, 2))
     
     heuristica = generar_heuristica_euclidiana(POSICIONES_NODOS, meta)
 
